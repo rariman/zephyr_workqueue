@@ -1,0 +1,10 @@
+menu "Work update"
+    config TIMER_INTERVAL
+        int "Timer interval (miliseconds)"
+        default 1000
+        range 100 10000
+        help
+            This option sets the interval for the timer in milliseconds.
+endmenu
+
+source "Kconfig.zephyr"
