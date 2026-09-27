@@ -1,52 +1,61 @@
-# Zephyr Workqueue LED Demo
+# Zephyr Workqueue LED Sample
 
-This project is a minimal Zephyr application that toggles the board LED using a timer-driven workqueue.
+This project demonstrates a simple Zephyr pattern: a periodic timer schedules a work item, and the actual LED state change happens in the workqueue callback.
 
 ## Overview
 
-The application:
+The sample application:
 
-- configures the LED connected to the `led0` alias
-- starts a periodic timer
+- gets the `led0` alias from the board devicetree
+- configures it as a GPIO output
+- starts a repeating `k_timer`
 - submits a `k_work` item from the timer callback
-- toggles the LED in the work handler
+- toggles the LED inside the work handler
 
-This is a simple example of using `k_timer` and `k_work` together in Zephyr.
+This is useful when the work must run outside the timer callback context, which is typically safer and more predictable in embedded systems.
 
-## Project files
+## Files in this project
 
-- `CMakeLists.txt` — Zephyr application configuration
-- `prj.conf` — project configuration, including timer interval
-- `src/main.c` — main application logic
-- `build_dk/` — generated build directory for the Nordic nrf54l15dk target
+- `CMakeLists.txt` — Zephyr app definition
+- `prj.conf` — build-time and runtime configuration
+- `src/main.c` — LED and timer logic
+- `build_dk/` — generated build output for the current target
+
+## Target board
+
+This sample is configured for the Nordic Semiconductor nRF54L15 DK:
+
+- board target: `nrf54l15dk/nrf54l15/cpuapp`
+- LED alias: `led0`
 
 ## Configuration
 
-The timer interval is set in `prj.conf`:
+The blink interval is set in `prj.conf`:
 
 ```conf
 CONFIG_TIMER_INTERVAL=1000
 ```
 
-That value is interpreted as milliseconds, so the LED toggles once per second.
+The value is in milliseconds, so the LED toggles once every second.
 
-## Requirements
+## Prerequisites
 
-This project expects a Zephyr/NCS environment, including:
+Before building, make sure you have:
 
-- Zephyr / Nordic Connect SDK
-- `west`
-- a compatible board target such as `nrf54l15dk/nrf54l15/cpuapp`
+- a working Zephyr / Nordic Connect SDK installation
+- `west` installed and available on your PATH
+- the correct board support files for the nRF54L15 DK
+- a connected board or debug probe
 
 ## Build
 
-From the project root:
+From the project root, run:
 
 ```bash
 west build -p always -b nrf54l15dk/nrf54l15/cpuapp .
 ```
 
-If you are using the generated build directory already present in this workspace, the configuration is under `build_dk/`.
+This workspace already includes a generated build directory at `build_dk/` for the matching board configuration.
 
 ## Flash
 
@@ -54,11 +63,20 @@ If you are using the generated build directory already present in this workspace
 west flash
 ```
 
-## Expected behavior
+## Expected result
 
-After flashing the firmware, the LED connected to the `led0` alias should blink at a 1-second interval.
+After flashing the firmware, the LED connected to the `led0` alias should blink continuously at a 1-second interval.
 
-## Notes
+## Implementation notes
 
-- The application uses `GPIO_DT_SPEC_GET` with the `led0` devicetree alias.
-- The timer callback does not toggle the LED directly; it submits work to be executed asynchronously by the system workqueue.
+- `GPIO_DT_SPEC_GET` is used to access the LED from the device tree.
+- `K_TIMER_DEFINE` creates the periodic timer.
+- `K_WORK_DEFINE` creates the deferred work item.
+- The LED state change happens in `work_handler()`, not directly in the timer callback.
+
+## Related Zephyr APIs
+
+- `k_timer`
+- `k_work`
+- `gpio_pin_toggle_dt()`
+- device tree aliases (`led0`)
